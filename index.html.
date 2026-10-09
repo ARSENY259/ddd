@@ -1,0 +1,574 @@
+{subject:"Математика",text:"Решить номера 125 и 126",date:"2026-10-12"},
+{subject:"Русский язык",text:"Выучить правило и выполнить упражнение 48",date:"2026-10-12"},
+{subject:"История",text:"Прочитать параграф 6",date:"2026-10-13"}
+];
+
+const demoSchedule = [
+"Понедельник: Математика, Русский язык, История, Биология",
+"Вторник: Английский язык, Математика, География, Физкультура",
+"Среда: Русский язык, История, Математика, Информатика",
+"Четверг: Биология, Английский язык, География, Математика",
+"Пятница: Русский язык, Физкультура, История, Труд"
+];
+
+function load(key,fallback){
+try{
+const value=localStorage.getItem(key);
+return value===null?fallback:JSON.parse(value);
+}catch(e){return fallback}
+}
+
+let grades=load("diaryGrades",demoGrades);
+let homework=load("diaryHomework",demoHomework);
+
+function save(){
+localStorage.setItem("diaryGrades",JSON.stringify(grades));
+localStorage.setItem("diaryHomework",JSON.stringify(homework));
+render();
+}
+
+function showPage(id){
+document.querySelectorAll(".page").forEach(p=>p.classList.add("hidden"));
+document.getElementById(id).classList.remove("hidden");
+}
+
+function login(){
+if(document.getElementById("password").value===ADMIN_PASSWORD){
+document.getElementById("adminTools").classList.remove("hidden");
+document.getElementById("loginMessage").textContent="Вход выполнен";
+}else{
+document.getElementById("loginMessage").textContent="Неверный пароль";
+}
+}
+
+function addGrade(){
+const subject=document.getElementById("subject").value.trim();
+const mark=Number(document.getElementById("mark").value);
+const date=document.getElementById("date").value;
+if(!subject||!date){alert("Заполни предмет и дату");return}
+grades.push({subject,mark,date});
+save();
+document.getElementById("subject").value="";
+}
+
+function addHomework(){
+const subject=document.getElementById("hwSubject").value.trim();
+const text=document.getElementById("hwText").value.trim();
+const date=document.getElementById("hwDate").value;
+if(!subject||!text||!date){alert("Заполни все поля");return}
+homework.push({subject,text,date});
+save();
+document.getElementById("hwSubject").value="";
+document.getElementById("hwText").value="";
+}
+
+function deleteGrade(index){
+if(confirm("Удалить эту оценку?")){
+grades.splice(index,1);
+save();
+}
+}
+
+function resetDemo(){
+if(confirm("Удалить оценки и домашние задания?")){
+grades=[];
+homework=[];
+save();
+}
+}
+
+function render(){
+const average=grades.length?
+(grades.reduce((sum,g)=>sum+g.mark,0)/grades.length).toFixed(2):"—";
+document.getElementById("average").textContent=average;
+document.getElementById("count").textContent=grades.length;
+
+document.getElementById("gradesTable").innerHTML=grades.map(g=>
+`<tr><td>${escapeHTML(g.subject)}</td><td>${g.mark}</td><td>${escapeHTML(g.date)}</td></tr>`
+).join("");
+
+document.getElementById("homeworkList").innerHTML=homework.map(h=>
+`<div class="card"><b>${escapeHTML(h.subject)}</b><p>${escapeHTML(h.text)}</p><div class="small">Срок: ${escapeHTML(h.date)}</div></div>`
+).join("")||"Домашних заданий пока нет";
+
+document.getElementById("scheduleList").innerHTML=demoSchedule.map(s=>
+`<p>${escapeHTML(s)}</p>`
+).join("");
+
+document.getElementById("adminGrades").innerHTML=grades.map((g,i)=>
+`<p>${escapeHTML(g.subject)} — ${g.mark} (${escapeHTML(g.date)})
+<button class="danger" onclick="deleteGrade(${i})">Удалить</button></p>`
+).join("")||"Оценок нет";
+}
+
+function escapeHTML(value){
+return String(value).replace(/[&<>"']/g,c=>({
+"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+}[c]));
+}
+
+render();
+</script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Электронный дневник</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f1f5f9;color:#172033;font-family:Arial,sans-serif}
+header{background:linear-gradient(120deg,#1745b8,#5685ff);color:white;padding:25px 18px}
+header h1{margin:0 0 10px;font-size:27px}
+header p{margin:5px 0}
+main{max-width:1000px;margin:22px auto;padding:0 15px}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+button{border:0;border-radius:9px;padding:11px 14px;background:#2858d8;color:white;cursor:pointer;font-size:14px}
+button:hover{filter:brightness(.92)}
+input,select,textarea{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:9px;margin:6px 0 13px;font:inherit;background:white}
+label{font-size:14px;font-weight:bold}
+.card{background:white;border-radius:15px;padding:19px;margin-bottom:16px;box-shadow:0 3px 15px #1720330b;overflow-wrap:anywhere}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.stat{font-size:29px;font-weight:bold;margin-top:8px}
+.small{font-size:13px;color:#64748b}
+.notice{background:#fff4d6;color:#79520b;padding:12px;border-radius:10px;margin-bottom:15px;font-size:13px}
+.page.hidden,.hidden{display:none!important}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:12px 8px;border-bottom:1px solid #e2e8f0}
+th{font-size:13px;color:#64748b}
+.tablewrap{overflow-x:auto}
+.danger{background:#dc3545}
+.secondary{background:#e7edff;color:#2149b8}
+.green{background:#16834a}
+h2{font-size:20px;margin-top:0}
+.item{padding:12px 0;border-bottom:1px solid #e2e8f0}
+.item:last-child{border-bottom:0}
+footer{text-align:center;color:#64748b;font-size:12px;padding:20px}
+@media(max-width:500px){header h1{font-size:23px}nav button{flex:1}td,th{padding:9px 5px;font-size:13px}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📚 Электронный дневник</h1>
+  <p>Ученик: <b>Новичков Кирилл</b></p>
+  <p style="font-size:13px">Личный школьный дневник</p>
+</header>
+
+<main>
+  <div class="notice">
+    ⚠️ Начальные оценки и задания — демонстрационные, не настоящие школьные данные.
+  </div>
+
+  <nav>
+    <button onclick="showPage('grades')">📊 Оценки</button>
+    <button onclick="showPage('homework')">📝 Домашние задания</button>
+    <button onclick="showPage('schedule')">📅 Расписание</button>
+    <button onclick="showPage('calendar')">🗓 Контрольные</button>
+    <button onclick="showPage('admin')">🔐 Администратор</button>
+  </nav>
+
+  <section id="grades" class="page">
+    <div class="grid">
+      <div class="card">
+        <div class="small">Средний балл</div>
+        <div class="stat" id="average">—</div>
+      </div>
+      <div class="card">
+        <div class="small">Количество оценок</div>
+        <div class="stat" id="gradeCount">0</div>
+      </div>
+      <div class="card">
+        <div class="small">Оценок «5»</div>
+        <div class="stat" id="fives">0</div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Журнал оценок</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Предмет</th><th>Оценка</th><th>Дата</th></tr></thead>
+          <tbody id="gradeRows"></tbody>
+        </table>
+      </div>
+      <p id="emptyGrades" class="small hidden">Оценок пока нет.</p>
+    </div>
+    <div class="card">
+      <h2>Итоги четверти</h2>
+      <p class="small">Демонстрационный расчёт по текущим оценкам предмета.</p>
+      <div id="quarterResults"></div>
+    </div>
+  </section>
+
+  <section id="homework" class="page hidden">
+    <div class="card">
+      <h2>Домашние задания</h2>
+      <div id="homeworkRows"></div>
+    </div>
+  </section>
+
+  <section id="schedule" class="page hidden">
+    <div class="card">
+      <h2>Расписание уроков</h2>
+      <p class="small">Пример расписания. Оно не получено из школы.</p>
+      <div id="scheduleRows"></div>
+    </div>
+  </section>
+
+  <section id="calendar" class="page hidden">
+<div class="card">
+      <h2>Контрольные и события</h2>
+      <div id="eventRows"></div>
+      <p class="small">Даты ниже — демонстрационные.</p>
+    </div>
+  </section>
+
+  <section id="admin" class="page hidden">
+    <div class="card" id="loginCard">
+      <h2>🔐 Вход администратора</h2>
+      <p class="small">Введи пароль для управления дневником.</p>
+      <label for="password">Пароль</label>
+      <input id="password" type="password" placeholder="Пароль администратора">
+      <button onclick="login()">Войти</button>
+      <p id="loginMessage" role="status"></p>
+    </div>
+
+    <div id="adminPanel" class="hidden">
+      <div class="card">
+        <h2>Панель управления</h2>
+        <p>Ученик: <b>Новичков Кирилл</b></p>
+        <button class="secondary" onclick="logout()">Выйти из админ-панели</button>
+      </div>
+
+      <div class="card">
+        <h2 id="gradeFormTitle">Добавить оценку</h2>
+        <label for="subject">Предмет</label>
+        <input id="subject" placeholder="Например, Математика">
+        <label for="mark">Оценка</label>
+        <select id="mark">
+          <option value="5">5 — отлично</option>
+          <option value="4">4 — хорошо</option>
+          <option value="3">3 — удовлетворительно</option>
+          <option value="2">2 — неудовлетворительно</option>
+        </select>
+        <label for="gradeDate">Дата</label>
+        <input id="gradeDate" type="date">
+        <button onclick="saveGrade()">Сохранить оценку</button>
+        <button class="secondary hidden" id="cancelGradeEdit" onclick="cancelGradeEdit()">Отмена</button>
+      </div>
+
+      <div class="card">
+        <h2>Все оценки</h2>
+        <div id="adminGradeRows"></div>
+      </div>
+
+      <div class="card">
+        <h2 id="hwFormTitle">Добавить домашнее задание</h2>
+        <label for="hwSubject">Предмет</label>
+        <input id="hwSubject" placeholder="Например, Русский язык">
+        <label for="hwText">Описание задания</label>
+        <textarea id="hwText" rows="3" placeholder="Что нужно выполнить?"></textarea>
+        <label for="hwDate">Срок выполнения</label>
+        <input id="hwDate" type="date">
+        <button onclick="saveHomework()">Сохранить задание</button>
+        <button class="secondary hidden" id="cancelHwEdit" onclick="cancelHomeworkEdit()">Отмена</button>
+      </div>
+
+      <div class="card">
+        <h2>Управление заданиями</h2>
+        <div id="adminHomeworkRows"></div>
+      </div>
+
+      <div class="card">
+        <h2>Добавить контрольную</h2>
+        <label for="eventSubject">Предмет</label>
+        <input id="eventSubject" placeholder="Предмет">
+        <label for="eventDate">Дата</label>
+        <input id="eventDate" type="date">
+        <label for="eventText">Описание</label>
+        <input id="eventText" placeholder="Например, контрольная работа">
+        <button onclick="saveEvent()">Добавить событие</button>
+      </div>
+
+      <div class="card">
+        <h2>Управление событиями</h2>
+        <div id="adminEventRows"></div>
+      </div>
+
+      <div class="card">
+        <h2>Четвертные итоги</h2>
+        <p class="small">Итоговые оценки можно указать вручную.</p>
+        <label for="finalSubject">Предмет</label>
+        <input id="finalSubject" placeholder="Предмет">
+        <label for="finalMark">Четвертная оценка</label>
+        <select id="finalMark">
+          <option value="5">5</option>
+          <option value="4">4</option>
+          <option value="3">3</option>
+          <option value="2">2</option>
+        </select>
+        <button onclick="saveFinal()">Сохранить итог</button>
+        <div id="adminFinalRows"></div>
+      </div>
+
+      <div class="card">
+        <h2>Сброс данных</h2>
+        <p class="small">Удалит оценки, задания, события и четвертные итоги из этого браузера.</p>
+        <button class="danger" onclick="resetAll()">Удалить все данные</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Электронный дневник · Демонстрационный проект
+</footer>
+
+<script>
+"use strict";
+const ADMIN_PASSWORD = "2003";
+const DEMO_GRADES = [
+  {subject:"Математика",mark:5,date:"2026-10-05"},
+  {subject:"Русский язык",mark:4,date:"2026-10-06"},
+  {subject:"История",mark:5,date:"2026-10-07"},
+  {subject:"Английский язык",mark:4,date:"2026-10-08"},
+  {subject:"Биология",mark:5,date:"2026-10-09"}
+];
+const DEMO_HOMEWORK = [
+  {subject:"Математика",text:"Решить номера 125 и 126",date:"2026-10-12"},
+  {subject:"Русский язык",text:"Выучить правило и выполнить упражнение 48",date:"2026-10-12"},
+  {subject:"История",text:"Прочитать параграф 6",date:"2026-10-13"}
+];
+const DEMO_EVENTS = [
+  {subject:"Математика",date:"2026-10-14",text:"Демонстрационная контрольная"},
+  {subject:"История",date:"2026-10-16",text:"Демонстрационный тест"}
+];
+const DEMO_SCHEDULE = [
+  ["Понедельник","Математика","Русский язык","История","Биология"],
+  ["Вторник","Английский язык","Математика","География","Физкультура"],
+  ["Среда","Русский язык","История","Математика","Информатика"],
+  ["Четверг","Биология","Английский язык","География","Математика"],
+  ["Пятница","Русский язык","Физкультура","История","Труд"]
+];
+
+function readData(key,fallback){
+  try{
+    const value=localStorage.getItem(key);
+    return value===null ? JSON.parse(JSON.stringify(fallback)) : JSON.parse(value);
+  }catch(error){
+    return JSON.parse(JSON.stringify(fallback));
+  }
+}
+
+let grades=readData("nk_diary_grades",DEMO_GRADES);
+let homework=readData("nk_diary_homework",DEMO_HOMEWORK);
+let events=readData("nk_diary_events",DEMO_EVENTS);
+let finals=readData("nk_diary_finals",[]);
+let editingGrade=-1;
+let editingHomework=-1;
+
+function el(id){return document.getElementById(id)}
+function safe(value){
+  return String(value).replace(/[&<>"']/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+  });
+}
+function saveData(){
+  try{
+    localStorage.setItem("nk_diary_grades",JSON.stringify(grades));
+    localStorage.setItem("nk_diary_homework",JSON.stringify(homework));
+    localStorage.setItem("nk_diary_events",JSON.stringify(events));
+    localStorage.setItem("nk_diary_finals",JSON.stringify(finals));
+    render();
+  }catch(error){
+    alert("Не удалось сохранить данные. Проверь настройки браузера.");
+  }
+}
+function showPage(id){
+  document.querySelectorAll(".page").forEach(function(p){p.classList.add("hidden")});
+  el(id).classList.remove("hidden");
+  if(id==="admin" && sessionStorage.getItem("nk_admin")==="yes"){
+    el("loginCard").classList.add("hidden");
+    el("adminPanel").classList.remove("hidden");
+  }
+}
+function login(){
+  if(el("password").value===ADMIN_PASSWORD){
+    sessionStorage.setItem("nk_admin","yes");
+    el("loginCard").classList.add("hidden");
+    el("adminPanel").classList.remove("hidden");
+    el("loginMessage").textContent="";
+    el("password").value="";
+    render();
+  }else{
+    el("loginMessage").textContent="Пароль неправильный. Попробуй ещё раз.";
+  }
+}
+function logout(){
+  sessionStorage.removeItem("nk_admin");
+  el("adminPanel").classList.add("hidden");
+  el("loginCard").classList.remove("hidden");
+  el("loginMessage").textContent="Ты вышел из панели администратора.";
+}
+function saveGrade(){
+  const subject=el("subject").value.trim();
+  const mark=Number(el("mark").value);
+  const date=el("gradeDate").value;
+  if(!subject||!date){alert("Заполни предмет и дату.");return}
+  const item={subject:subject,mark:mark,date:date};
+  if(editingGrade>=0){grades[editingGrade]=item}
+  else{grades.push(item)}
+  cancelGradeEdit();
+  saveData();
+}
+function editGrade(index){
+  const g=grades[index];
+  el("subject").value=g.subject;
+  el("mark").value=String(g.mark);
+  el("gradeDate").value=g.date;
+  editingGrade=index;
+  el("gradeFormTitle").textContent="Изменить оценку";
+  el("cancelGradeEdit").classList.remove("hidden");
+  showPage("admin");
+}
+function cancelGradeEdit(){
+  editingGrade=-1;
+  el("subject").value="";
+  el("mark").value="5";
+  el("gradeDate").value="";
+  el("gradeFormTitle").textContent="Добавить оценку";
+el("cancelGradeEdit").classList.add("hidden");
+}
+function deleteGrade(index){
+  if(confirm("Удалить оценку?")){
+    grades.splice(index,1);
+    cancelGradeEdit();
+    saveData();
+  }
+}
+function saveHomework(){
+  const subject=el("hwSubject").value.trim();
+  const text=el("hwText").value.trim();
+  const date=el("hwDate").value;
+  if(!subject||!text||!date){alert("Заполни предмет, задание и срок.");return}
+  const item={subject:subject,text:text,date:date};
+  if(editingHomework>=0){homework[editingHomework]=item}
+  else{homework.push(item)}
+  cancelHomeworkEdit();
+  saveData();
+}
+function editHomework(index){
+  const h=homework[index];
+  el("hwSubject").value=h.subject;
+  el("hwText").value=h.text;
+  el("hwDate").value=h.date;
+  editingHomework=index;
+  el("hwFormTitle").textContent="Изменить задание";
+  el("cancelHwEdit").classList.remove("hidden");
+  showPage("admin");
+}
+function cancelHomeworkEdit(){
+  editingHomework=-1;
+  el("hwSubject").value="";
+  el("hwText").value="";
+  el("hwDate").value="";
+  el("hwFormTitle").textContent="Добавить домашнее задание";
+  el("cancelHwEdit").classList.add("hidden");
+}
+function deleteHomework(index){
+  if(confirm("Удалить домашнее задание?")){
+    homework.splice(index,1);
+    cancelHomeworkEdit();
+    saveData();
+  }
+}
+function saveEvent(){
+  const subject=el("eventSubject").value.trim();
+  const date=el("eventDate").value;
+  const text=el("eventText").value.trim();
+  if(!subject||!date||!text){alert("Заполни все поля контрольной.");return}
+  events.push({subject:subject,date:date,text:text});
+  el("eventSubject").value="";
+  el("eventDate").value="";
+  el("eventText").value="";
+  saveData();
+}
+function deleteEvent(index){
+  if(confirm("Удалить событие?")){
+    events.splice(index,1);
+    saveData();
+  }
+}
+function saveFinal(){
+  const subject=el("finalSubject").value.trim();
+  const mark=Number(el("finalMark").value);
+  if(!subject){alert("Введи предмет.");return}
+  const existing=finals.findIndex(function(f){return f.subject.toLowerCase()===subject.toLowerCase()});
+  if(existing>=0){finals[existing].mark=mark}
+  else{finals.push({subject:subject,mark:mark})}
+  el("finalSubject").value="";
+  saveData();
+}
+function deleteFinal(index){
+  if(confirm("Удалить итоговую оценку?")){
+    finals.splice(index,1);
+    saveData();
+  }
+}
+function resetAll(){
+  if(!confirm("Точно удалить все оценки, задания, события и итоги?"))return;
+  grades=[];homework=[];events=[];finals=[];
+  cancelGradeEdit();cancelHomeworkEdit();
+  saveData();
+}
+function render(){
+  const avg=grades.length ? grades.reduce(function(s,g){return s+Number(g.mark)},0)/grades.length : 0;
+  el("average").textContent=grades.length ? avg.toFixed(2) : "—";
+  el("gradeCount").textContent=grades.length;
+  el("fives").textContent=grades.filter(function(g){return Number(g.mark)===5}).length;
+  el("gradeRows").innerHTML=grades.map(function(g){
+    return "<tr><td>"+safe(g.subject)+"</td><td><b>"+safe(g.mark)+"</b></td><td>"+safe(g.date)+"</td></tr>";
+  }).join("");
+  el("emptyGrades").classList.toggle("hidden",grades.length>0);
+
+  const subjects=[...new Set(grades.map(function(g){return g.subject}))];
+  el("quarterResults").innerHTML=subjects.map(function(subject){
+    const list=grades.filter(function(g){return g.subject===subject});
+    const mean=list.reduce(function(s,g){return s+Number(g.mark)},0)/list.length;
+    return "<div class='item'><b>"+safe(subject)+"</b> — средний балл "+mean.toFixed(2)+"</div>";
+  }).join("")||"<p class='small'>Пока нет оценок для расчёта.</p>";
+
+  el("homeworkRows").innerHTML=homework.map(function(h){
+    return "<div class='item'><b>"+safe(h.subject)+"</b><p>"+safe(h.text)+"</p><span class='small'>Срок: "+safe(h.date)+"</span></div>";
+  }).join("")||"<p class='small'>Домашних заданий пока нет.</p>";
+
+  el("scheduleRows").innerHTML=DEMO_SCHEDULE.map(function(day){
+    return "<div class='item'><b>"+safe(day[0])+"</b><p>"+day.slice(1).map(safe).join(" · ")+"</p></div>";
+  }).join("");
+el("eventRows").innerHTML=events.map(function(e){
+    return "<div class='item'><b>"+safe(e.subject)+"</b><p>"+safe(e.text)+"</p><span class='small'>Дата: "+safe(e.date)+"</span></div>";
+  }).join("")||"<p class='small'>Событий пока нет.</p>";
+
+  el("adminGradeRows").innerHTML=grades.map(function(g,i){
+    return "<div class='item'><b>"+safe(g.subject)+" — "+safe(g.mark)+"</b><p class='small'>"+safe(g.date)+"</p><button class='secondary' onclick='editGrade("+i+")'>Изменить</button> <button class='danger' onclick='deleteGrade("+i+")'>Удалить</button></div>";
+  }).join("")||"<p class='small'>Оценок нет.</p>";
+
+  el("adminHomeworkRows").innerHTML=homework.map(function(h,i){
+    return "<div class='item'><b>"+safe(h.subject)+"</b><p>"+safe(h.text)+"</p><p class='small'>"+safe(h.date)+"</p><button class='secondary' onclick='editHomework("+i+")'>Изменить</button> <button class='danger' onclick='deleteHomework("+i+")'>Удалить</button></div>";
+  }).join("")||"<p class='small'>Заданий нет.</p>";
+
+  el("adminEventRows").innerHTML=events.map(function(e,i){
+    return "<div class='item'>"+safe(e.subject)+" — "+safe(e.text)+" ("+safe(e.date)+") <button class='danger' onclick='deleteEvent("+i+")'>Удалить</button></div>";
+  }).join("")||"<p class='small'>Событий нет.</p>";
+
+  el("adminFinalRows").innerHTML=finals.map(function(f,i){
+    return "<div class='item'>"+safe(f.subject)+" — <b>"+safe(f.mark)+"</b> <button class='danger' onclick='deleteFinal("+i+")'>Удалить</button></div>";
+  }).join("")||"<p class='small'>Четвертные итоги не указаны.</p>";
+}
+
+render();
+</script>
+</body>
+</html>
